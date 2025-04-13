@@ -7,6 +7,7 @@ import {
   doc,
   onSnapshot,
   addDoc,
+  updateDoc,
 } from '@angular/fire/firestore';
 import { elementAt } from 'rxjs';
 import { Title } from '@angular/platform-browser';
@@ -28,10 +29,40 @@ export class NoteListService {
     this.unsubTrash = this.subTrashList();
   }
 
-  async addNote(item: {}) {
-    await addDoc(this.getNotesRef(), item)
-      .catch(() => {})
-      .then(() => {});
+  async updateNote(note: Note) {
+    if (note.id) {
+      let docRef = this.getSingleDocRef(this.getColIdFromNote(note), note.id);
+      await updateDoc(docRef, this.getCleanJson(note)).catch((err) => {
+        console.error(err);
+      });
+    }
+  }
+
+  getCleanJson(note: Note): {} {
+    return {
+      type: note.type,
+      title: note.title,
+      content: note.content,
+      marked: note.marked,
+    };
+  }
+
+  getColIdFromNote(note: Note) {
+    if (note.type == 'note') {
+      return 'notes';
+    } else {
+      return 'trash';
+    }
+  }
+
+  async addNote(item: Note) {
+    const docRef = await addDoc(this.getNotesRef(), item)
+      .catch((err) => {
+        console.error(err);
+      })
+      .then((docRef) => {
+        console.log('Document written with ID: '), docRef?.id;
+      });
   }
 
   ngOnDestroy() {
