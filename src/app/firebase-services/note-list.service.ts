@@ -8,6 +8,7 @@ import {
   onSnapshot,
   addDoc,
   updateDoc,
+  deleteDoc,
 } from '@angular/fire/firestore';
 import { elementAt } from 'rxjs';
 import { Title } from '@angular/platform-browser';
@@ -27,6 +28,12 @@ export class NoteListService {
   constructor() {
     this.unsubNotes = this.subNotesList();
     this.unsubTrash = this.subTrashList();
+  }
+
+  async deleteNote(colId: 'notes' | 'trash', docId: string) {
+    await deleteDoc(this.getSingleDocRef(colId, docId)).catch((err) => {
+      console.error(err);
+    });
   }
 
   async updateNote(note: Note) {
@@ -55,13 +62,16 @@ export class NoteListService {
     }
   }
 
-  async addNote(item: Note) {
-    const docRef = await addDoc(this.getNotesRef(), item)
+  async addNote(item: Note, colId: 'notes' | 'trash') {
+    const colRef = collection(this.firestore, colId);
+    const docRef = await addDoc(colRef, item)
       .catch((err) => {
-        console.error(err);
+        console.error('Error adding document:', err);
       })
       .then((docRef) => {
-        console.log('Document written with ID: '), docRef?.id;
+        if (docRef) {
+          console.log('Document written with ID:', docRef.id);
+        }
       });
   }
 
